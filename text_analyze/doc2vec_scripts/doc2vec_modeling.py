@@ -12,6 +12,9 @@ import MySQLdb.cursors
 import os
 from datetime import datetime
 
+REP_ROOT = '/Users/taiyo/Desktop/git/ya-recognize'
+TEXT_ANALYZE = REP_ROOT + '/text_analyze'
+
 conn = MySQLdb.connect(
     host="localhost",
     user=os.environ['YAHOO_AUCTION_DB_USERNAME'],
@@ -29,13 +32,13 @@ descriptions = {}
 
 # model作成用のデータ作成 => descriptions
 for i in range(1, 1000, 20):
-    query = u"SELECT auction_id, title, non_tagged_description FROM items LIMIT {0}, 20;".format(i)
+    query = u"SELECT auction_id, wakati_title, non_tagged_description FROM items LIMIT {0}, 20;".format(i)
     cursor.execute(query)
     results = cursor.fetchall()
 
     for result in results:
-        descriptions[result['auction_id']] = result['non_tagged_description'].split(' ')
+        descriptions[result['auction_id']] = result['non_tagged_description'].split(' ') + result['wakati_title'].split(' ')
 
 labeled_descriptions = models.doc2vec.LabeledListSentence(descriptions.values())
-model = models.doc2vec.Doc2Vec(labeled_descriptions, min_count=0)
-model.save('./doc2vec_model/model.d2c')
+model = models.doc2vec.Doc2Vec(labeled_descriptions, min_count=1)
+model.save(TEXT_ANALYZE + '/doc2vec_model/model.d2c')
