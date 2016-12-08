@@ -12,7 +12,7 @@ import MySQLdb.cursors
 import os
 from datetime import datetime
 
-REP_ROOT = '/Users/taiyo/Desktop/git/ya-recognize'
+REP_ROOT = os.environ['YA_RECOGNIZE_ROOT']
 TEXT_ANALYZE = REP_ROOT + '/text_analyze'
 
 conn = MySQLdb.connect(
