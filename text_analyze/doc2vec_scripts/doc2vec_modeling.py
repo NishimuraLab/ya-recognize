@@ -31,7 +31,7 @@ cnt = cursor.fetchone()['count(id)']
 descriptions = {}
 
 # model作成用のデータ作成 => descriptions
-for i in range(1, 1000, 20):
+for i in range(1, 200000, 20):
     query = u"SELECT auction_id, wakati_title, non_tagged_description FROM items LIMIT {0}, 20;".format(i)
     cursor.execute(query)
     results = cursor.fetchall()
