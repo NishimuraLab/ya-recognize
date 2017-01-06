@@ -28,6 +28,17 @@ cursor = conn.cursor()
 cursor.execute(u'SELECT count(id) FROM items;')
 cnt = cursor.fetchone()['count(id)']
 
+def check_exist(label_ids=[]):
+    query = u"""
+        SELECT id FROM similarities
+        WHERE (label_id = {0} and pair_label_id = {1}) or (label_id = {1} and pair_label_id = {0});
+    """.format(label_ids[0], label_ids[1])
+    cursor.execute(query)
+    if not cursor.fetchone():
+        return False
+    else:
+        return True
+
 descriptions = {}
 
 # model作成用のデータ作成 => descriptions
@@ -58,9 +69,13 @@ for i, auction_id in enumerate(desc_auction_ids):
     similarities = loaded_model.most_similar_labels(base_label_name + str(i),topn=len(desc_auction_ids))
 
     for similarity in similarities:
-        print('inserting ' + similarity[0])
         cursor.execute(u"SELECT id FROM labels WHERE label = '{0}' LIMIT 1".format(similarity[0]))
         pair_label_id = cursor.fetchone()['id']
+        # すでに存在するかチェック
+        if check_exist([main_label_id, pair_label_id]):
+            continue
+
+        print('inserting ' + similarity[0])
         cursor.execute(u"INSERT INTO similarities (label_id, pair_label_id, degree, created_at, updated_at) VALUES ({0}, {1}, {2}, '{3}', '{4}')".format(main_label_id, pair_label_id, similarity[1], now_time, now_time))
         conn.commit()
         print('done')
