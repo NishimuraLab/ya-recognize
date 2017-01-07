@@ -38,6 +38,9 @@ cursor = conn.cursor()
 # とりあえず5万件で作っておいて、train用のscriptを作る
 # dataの重複に気をつける
 descriptions = {}
+auction_ids = []
+model = models.doc2vec.Doc2Vec(min_count=1)
+
 print('Start modeling...')
 for i in range(1, 50000, 20):
     query = """
@@ -50,14 +53,36 @@ for i in range(1, 50000, 20):
     cursor.execute(query)
     results = cursor.fetchall()
 
-    if len(results) == 0:
-        print('Not found data...')
-        sys.exit()
-
+    # if len(results) == 0:
+    #     print('Not found data...')
+    #     sys.exit()
+    #
+    sentences = []
     for result in results:
         print("reflect to model {0}".format(result['auction_id']))
-        descriptions[result['auction_id']] = result['description'].split(' ') + result['title'].split(' ')
+        auction_ids.append(result['auction_id'])
+        sentences.append(models.doc2vec.LabeledSentence(words=result['description'].split(' ') + result['title'].split(' '), tags=["{0}".format(result['auction_id'])]))
+        model.scan_vocab(sentences, update=True)
 
-labeled_descriptions = models.doc2vec.LabeledListSentence(descriptions.values())
-model = models.doc2vec.Doc2Vec(labeled_descriptions, min_count=0)
+model.scale_vocab()
+model.finalize_vocab()
+
+# 訓練
+for i in range(0, 800, 20):
+    start = i
+    end = i + 20
+    query = """
+        SELECT auction_id, description, title FROM processed_texts WHERE auction_id IN ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}', '{15}', '{16}', '{17}', '{18}', '{19}')
+    """.format(auction_ids[start:end][0], auction_ids[start:end][1], auction_ids[start:end][2], auction_ids[start:end][3], auction_ids[start:end][4], auction_ids[start:end][5], auction_ids[start:end][6], auction_ids[start:end][7], auction_ids[start:end][8]
+    , auction_ids[start:end][9], auction_ids[start:end][10], auction_ids[start:end][11], auction_ids[start:end][12], auction_ids[start:end][13], auction_ids[start:end][14], auction_ids[start:end][15], auction_ids[start:end][16], auction_ids[start:end][17]
+    , auction_ids[start:end][18], auction_ids[start:end][19])
+    print(query)
+    cursor.execute(query)
+    ptexts = cursor.fetchall()
+
+    sentences = []
+    for ptext in ptexts:
+        sentences.append(models.doc2vec.LabeledSentence(words=ptext['description'].split(' ') + ptext['title'].split(' '), tags=["{0}".format(ptext['auction_id'])]))
+    model.train(sentences)
+
 model.save(TEXT_ANALYZE + '/doc2vec_model/model.d2c')
