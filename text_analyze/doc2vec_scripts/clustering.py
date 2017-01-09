@@ -1,7 +1,10 @@
 from gensim import models
 import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.decomposition import TruncatedSVD
+import x_means as XMeans
 import os
-from sklean.cluster import KMeans
+import sys
 import MySQLdb
 import MySQLdb.cursors
 
@@ -48,11 +51,11 @@ if len(args) == 1:
     sys.exit()
 
 # labelをfetch
-query = """
-    SELECT id, label FROM labels;
-"""
-cursor.execute(query)
-labels = cursor.fetchall()
+# query = """
+#     SELECT id, label FROM labels;
+# """
+# cursor.execute(query)
+# labels = cursor.fetchall()
 
 # keyがid, valueがlabelの辞書に整形する
 labels_dic = {}
@@ -60,5 +63,12 @@ for label in labels:
     labels_dic[label['id']] = label['label']
 
 matrix = create_similarities_matrix(labels_dic)
+print(matrix[:10])
+# 次元圧縮
+lsa = TruncatedSVD(1000)
+info_matrix = lsa.fit_transform(matrix)
+print(info_matrix[:10])
+# データ整形ここまで
 
-print matrix[:10]
+km = KMeans
+fitted_km = km.fit(matrix)

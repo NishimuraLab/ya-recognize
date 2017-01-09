@@ -42,40 +42,46 @@ def check_exist(label_ids=[]):
 descriptions = {}
 
 # model作成用のデータ作成 => descriptions
-for i in range(1, cnt, 20):
-    query = u"SELECT auction_id, title, non_tagged_description FROM items LIMIT {0}, 20;".format(i)
-    cursor.execute(query)
-    results = cursor.fetchall()
-
-    for result in results:
-        descriptions[result['auction_id']] = result['non_tagged_description'].split(' ')
+# for i in range(1, cnt, 20):
+#     query = u"SELECT auction_id, title, non_tagged_description FROM items LIMIT {0}, 20;".format(i)
+#     cursor.execute(query)
+#     results = cursor.fetchall()
+#
+#     for result in results:
+#         descriptions[result['auction_id']] = result['non_tagged_description'].split(' ')
 
 loaded_model = models.doc2vec.Doc2Vec.load(TEXT_ANALYZE + '/doc2vec_model/model.d2c')
 
-# modelの類似度をDBへ入れる
-base_label_name = 'SENT_'
-desc_auction_ids = list(descriptions.keys())
+# modelizeしたitemのauction_idをDBへ入れる
 now_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-# labelsへ挿入
-for i, auction_id in enumerate(desc_auction_ids):
-    cursor.execute(u"INSERT INTO labels (auction_id, label, created_at, updated_at) VALUES ('{0}', '{1}', '{2}', '{3}');".format(auction_id, base_label_name + str(i), now_time, now_time))
+for auction_id, _ in loaded_model.docvecs.doctags.items():
+    query = """
+        INSERT INTO modelized_item_indexes (auction_id, type) VALUES ('{0}', 'noun_number_only_model')
+    """.format(auction_id)
+    cursor.execute(query)
     conn.commit()
+    print('inserted: ' + auction_id)
+
+# labelsへ挿入
+# for i, auction_id in enumerate(desc_auction_ids):
+#     cursor.execute(u"INSERT INTO labels (auction_id, label, created_at, updated_at) VALUES ('{0}', '{1}', '{2}', '{3}');".format(auction_id, base_label_name + str(i), now_time, now_time))
+#     conn.commit()
 
 # similaritiesへ挿入
-for i, auction_id in enumerate(desc_auction_ids):
-    cursor.execute(u"SELECT id FROM labels WHERE auction_id = '{0}' LIMIT 1".format(auction_id))
-    main_label_id = cursor.fetchone()['id']
-
-    similarities = loaded_model.most_similar_labels(base_label_name + str(i),topn=len(desc_auction_ids))
-
-    for similarity in similarities:
-        cursor.execute(u"SELECT id FROM labels WHERE label = '{0}' LIMIT 1".format(similarity[0]))
-        pair_label_id = cursor.fetchone()['id']
-        # すでに存在するかチェック
-        if check_exist([main_label_id, pair_label_id]):
-            continue
-
-        print('inserting ' + similarity[0])
-        cursor.execute(u"INSERT INTO similarities (label_id, pair_label_id, degree, created_at, updated_at) VALUES ({0}, {1}, {2}, '{3}', '{4}')".format(main_label_id, pair_label_id, similarity[1], now_time, now_time))
-        conn.commit()
-        print('done')
+# for i, auction_id in enumerate(desc_auction_ids):
+#     cursor.execute(u"SELECT id FROM labels WHERE auction_id = '{0}' LIMIT 1".format(auction_id))
+#     main_label_id = cursor.fetchone()['id']
+#
+#     similarities = loaded_model.most_similar_labels(base_label_name + str(i),topn=len(desc_auction_ids))
+#
+#     for similarity in similarities:
+#         cursor.execute(u"SELECT id FROM labels WHERE label = '{0}' LIMIT 1".format(similarity[0]))
+#         pair_label_id = cursor.fetchone()['id']
+#         # すでに存在するかチェック
+#         if check_exist([main_label_id, pair_label_id]):
+#             continue
+#
+#         print('inserting ' + similarity[0])
+#         cursor.execute(u"INSERT INTO similarities (label_id, pair_label_id, degree, created_at, updated_at) VALUES ({0}, {1}, {2}, '{3}', '{4}')".format(main_label_id, pair_label_id, similarity[1], now_time, now_time))
+#         conn.commit()
+#         print('done')
