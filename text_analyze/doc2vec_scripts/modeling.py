@@ -37,16 +37,25 @@ cursor = conn.cursor()
 descriptions = {}
 auction_ids = []
 model = models.doc2vec.Doc2Vec(min_count=1)
-print(type(int(args[2])))
+
 print('Start modeling...')
 for i in range(1, int(args[2]), 20):
-    query = """
-        SELECT items.auction_id, ptexts.description, ptexts.title
-        FROM items
-        LEFT JOIN processed_texts AS ptexts ON items.auction_id = ptexts.auction_id
-        WHERE process_type = '{0}'
-        LIMIT {1}, 20;
-    """.format(args[1], i)
+    if len(args) == 4:
+        query = """
+            SELECT items.auction_id, ptexts.description, ptexts.title
+            FROM items
+            LEFT JOIN processed_texts AS ptexts ON items.auction_id = ptexts.auction_id
+            WHERE process_type = '{0}' AND items.category_id = {2}
+            LIMIT {1}, 20;
+        """.format(args[1], i, args[3])
+    else:
+        query = """
+            SELECT items.auction_id, ptexts.description, ptexts.title
+            FROM items
+            LEFT JOIN processed_texts AS ptexts ON items.auction_id = ptexts.auction_id
+            WHERE process_type = '{0}'
+            LIMIT {1}, 20;
+        """.format(args[1], i)
     cursor.execute(query)
     results = cursor.fetchall()
 
