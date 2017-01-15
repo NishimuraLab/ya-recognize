@@ -3,10 +3,6 @@ from gensim import models
 import numpy as np
 from numpy import random
 random.seed(555)
-# from scipy.cluster.vq import vq, kmeans, whiten
-# from sklearn.decomposition import TruncatedSVD
-# from collections import defaultdict
-# from separatewords import MecabTokenize  # 目的に合わせた形態素解析器を呼びだして下さい
 import MySQLdb
 import MySQLdb.cursors
 import os
@@ -17,9 +13,12 @@ REP_ROOT = os.environ['YA_RECOGNIZE_ROOT']
 TEXT_ANALYZE = REP_ROOT + '/text_analyze'
 
 # arguments
+# args[0] = this file PATH
+# args[1] = text process_type
+# args[2] = load data count
 args = sys.argv
-if len(args) == 1:
-    print('Please give process_type string')
+if len(args) < 3:
+    print('Please give me process_type and load data count')
     sys.exit()
 
 # MySql connection
@@ -34,15 +33,13 @@ conn = MySQLdb.connect(
 )
 cursor = conn.cursor()
 
-# model作成用のデータ作成 => descriptions
-# とりあえず5万件で作っておいて、train用のscriptを作る
-# dataの重複に気をつける
+# make data to train model => descriptions
 descriptions = {}
 auction_ids = []
 model = models.doc2vec.Doc2Vec(min_count=1)
-
+print(type(int(args[2])))
 print('Start modeling...')
-for i in range(1, 50000, 20):
+for i in range(1, int(args[2]), 20):
     query = """
         SELECT items.auction_id, ptexts.description, ptexts.title
         FROM items
@@ -53,10 +50,6 @@ for i in range(1, 50000, 20):
     cursor.execute(query)
     results = cursor.fetchall()
 
-    # if len(results) == 0:
-    #     print('Not found data...')
-    #     sys.exit()
-    #
     sentences = []
     for result in results:
         print("reflect to model {0}".format(result['auction_id']))
@@ -67,8 +60,8 @@ for i in range(1, 50000, 20):
 model.scale_vocab()
 model.finalize_vocab()
 
-# 訓練
-for i in range(0, 800, 20):
+# train
+for i in range(0, int(args[2]), 20):
     start = i
     end = i + 20
     query = """
@@ -76,7 +69,6 @@ for i in range(0, 800, 20):
     """.format(auction_ids[start:end][0], auction_ids[start:end][1], auction_ids[start:end][2], auction_ids[start:end][3], auction_ids[start:end][4], auction_ids[start:end][5], auction_ids[start:end][6], auction_ids[start:end][7], auction_ids[start:end][8]
     , auction_ids[start:end][9], auction_ids[start:end][10], auction_ids[start:end][11], auction_ids[start:end][12], auction_ids[start:end][13], auction_ids[start:end][14], auction_ids[start:end][15], auction_ids[start:end][16], auction_ids[start:end][17]
     , auction_ids[start:end][18], auction_ids[start:end][19])
-    print(query)
     cursor.execute(query)
     ptexts = cursor.fetchall()
 
@@ -85,4 +77,4 @@ for i in range(0, 800, 20):
         sentences.append(models.doc2vec.LabeledSentence(words=ptext['description'].split(' ') + ptext['title'].split(' '), tags=["{0}".format(ptext['auction_id'])]))
     model.train(sentences)
 
-model.save(TEXT_ANALYZE + '/doc2vec_model/model.d2c')
+model.save(TEXT_ANALYZE + "/doc2vec_model/{0}_model.d2c".format(args[1]))
