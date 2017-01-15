@@ -55,3 +55,13 @@ for aid, degree in similarities:
     print("  degree: {0}".format(degree))
     print("  title: {0}".format(_item['title']))
     print("  same seller?: {0}".format(item['seller_id'] == _item['seller_id']))
+
+print("\n\n")
+print("auction_id,match,same_seller_flg,auction_item_url")
+for aid, degree in similarities:
+    query = """
+        SELECT seller_id, auction_item_url FROM items where auction_id = '{0}';
+    """.format(aid)
+    cursor.execute(query)
+    _item = cursor.fetchone()
+    print("{0},,{1},{2}".format(aid, item['seller_id'] == _item['seller_id'], _item['auction_item_url']))
