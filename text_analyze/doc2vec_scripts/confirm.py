@@ -13,7 +13,13 @@ import os
 import sys
 from datetime import datetime
 
+# args[0] = this file PATH
+# args[1] = auction_id
+# args[2] = load model name
 args = sys.argv
+if len(args) < 3:
+    print("please give me auction_id and load model name")
+    sys.exit()
 
 REP_ROOT = os.environ['YA_RECOGNIZE_ROOT']
 TEXT_ANALYZE = REP_ROOT + '/text_analyze'
@@ -29,7 +35,7 @@ conn = MySQLdb.connect(
 )
 cursor = conn.cursor()
 
-loaded_model = models.doc2vec.Doc2Vec.load(TEXT_ANALYZE + '/doc2vec_model/model.d2c')
+loaded_model = models.doc2vec.Doc2Vec.load(TEXT_ANALYZE + "/doc2vec_model/{0}.d2c".format(args[2]))
 similarities = loaded_model.docvecs.most_similar(args[1], topn=100)
 print("auction_id: {0}の類似度ランキング↓".format(args[1]))
 
