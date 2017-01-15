@@ -14,9 +14,6 @@ import sys
 from datetime import datetime
 
 args = sys.argv
-if len(args) == 1:
-    print('Please give auction_id')
-    sys.exit()
 
 REP_ROOT = os.environ['YA_RECOGNIZE_ROOT']
 TEXT_ANALYZE = REP_ROOT + '/text_analyze'
@@ -33,25 +30,28 @@ conn = MySQLdb.connect(
 cursor = conn.cursor()
 
 loaded_model = models.doc2vec.Doc2Vec.load(TEXT_ANALYZE + '/doc2vec_model/model.d2c')
-# print(loaded_model.docvecs.doctags)
 similarities = loaded_model.docvecs.most_similar(args[1])
 print("auction_id: {0}の類似度ランキング↓".format(args[1]))
 
 query = """
-    SELECT title, description FROM items where auction_id = '{0}';
+    SELECT title, description, seller_id, auction_item_url FROM items where auction_id = '{0}';
 """.format(args[1])
 cursor.execute(query)
 item = cursor.fetchone()
 print("auction_id: {0}".format(args[1]))
 print("  title: {0}".format(item['title']))
+print("  seller_id: {0}".format(item['seller_id']))
+print("  auction_item_url: {0}".format(item['auction_item_url']))
+print('-----------------------------------------------------------------')
 
 for aid, degree in similarities:
     query = """
-        SELECT title, description FROM items where auction_id = '{0}';
+        SELECT title, description, seller_id, auction_item_url FROM items where auction_id = '{0}';
     """.format(aid)
     cursor.execute(query)
-    item = cursor.fetchone()
+    _item = cursor.fetchone()
     print("auction_id: {0}".format(aid))
+    print("  auction_item_url: {0}".format(_item['auction_item_url']))
     print("  degree: {0}".format(degree))
-    print("  title: {0}".format(item['title']))
-    # print("  description: {0}".format(item['description']))
+    print("  title: {0}".format(_item['title']))
+    print("  same seller?: {0}".format(item['seller_id'] == _item['seller_id']))
