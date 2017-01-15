@@ -31,7 +31,7 @@ conn = MySQLdb.connect(
 cursor = conn.cursor()
 
 # make data to train model => descriptions
-descriptions = {}
+# store auction ids for training model after reado
 auction_ids = []
 model = models.doc2vec.Doc2Vec(min_count=1)
 
@@ -60,7 +60,12 @@ for i in range(1, int(args[2]), 20):
     for result in results:
         print("reflect to model {0}".format(result['auction_id']))
         auction_ids.append(result['auction_id'])
-        sentences.append(models.doc2vec.LabeledSentence(words=result['description'].split(' ') + result['title'].split(' '), tags=["{0}".format(result['auction_id'])]))
+        sentences.append(
+            models.doc2vec.LabeledSentence(
+                words=result['description'].split(' ') + result['title'].split(' '),
+                tags=["{0}".format(result['auction_id'])]
+            )
+        )
         model.scan_vocab(sentences, update=True)
         model.scale_vocab()
 
@@ -80,7 +85,12 @@ for i in range(0, int(args[2]), 20):
 
     sentences = []
     for ptext in ptexts:
-        sentences.append(models.doc2vec.LabeledSentence(words=ptext['description'].split(' ') + ptext['title'].split(' '), tags=["{0}".format(ptext['auction_id'])]))
+        sentences.append(
+            models.doc2vec.LabeledSentence(
+                words=ptext['description'].split(' ') + ptext['title'].split(' '),
+                tags=["{0}".format(ptext['auction_id'])]
+            )
+        )
     model.train(sentences)
 
 model.save(TEXT_ANALYZE + "/doc2vec_model/{0}_model.d2c".format(args[1]))
