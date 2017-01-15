@@ -30,7 +30,7 @@ conn = MySQLdb.connect(
 cursor = conn.cursor()
 
 loaded_model = models.doc2vec.Doc2Vec.load(TEXT_ANALYZE + '/doc2vec_model/model.d2c')
-similarities = loaded_model.docvecs.most_similar(args[1])
+similarities = loaded_model.docvecs.most_similar(args[1], topn=100)
 print("auction_id: {0}の類似度ランキング↓".format(args[1]))
 
 query = """
