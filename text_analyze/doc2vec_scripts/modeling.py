@@ -1,8 +1,5 @@
 # coding: utf-8
 from gensim import models
-import numpy as np
-from numpy import random
-random.seed(555)
 import MySQLdb
 import MySQLdb.cursors
 import os
