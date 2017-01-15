@@ -5,10 +5,6 @@ import MySQLdb.cursors
 import os
 import sys
 
-# PATH
-REP_ROOT = os.environ['YA_RECOGNIZE_ROOT']
-TEXT_ANALYZE = REP_ROOT + '/text_analyze'
-
 # arguments
 # args[0] = this file PATH
 # args[1] = text process_type
@@ -94,4 +90,7 @@ for i in range(0, int(args[2]), 20):
         )
     model.train(sentences)
 
+# PATH
+REP_ROOT = os.environ['YA_RECOGNIZE_ROOT']
+TEXT_ANALYZE = REP_ROOT + '/text_analyze'
 model.save(TEXT_ANALYZE + "/doc2vec_model/{0}_model.d2c".format(args[1]))
