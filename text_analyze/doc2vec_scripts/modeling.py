@@ -65,8 +65,8 @@ for i in range(1, int(args[2]), 20):
         auction_ids.append(result['auction_id'])
         sentences.append(models.doc2vec.LabeledSentence(words=result['description'].split(' ') + result['title'].split(' '), tags=["{0}".format(result['auction_id'])]))
         model.scan_vocab(sentences, update=True)
+        model.scale_vocab()
 
-model.scale_vocab()
 model.finalize_vocab()
 
 # train
