@@ -13,9 +13,10 @@ TEXT_ANALYZE = REP_ROOT + '/text_analyze'
 # args[0] = this file PATH
 # args[1] = text process_type
 # args[2] = load data count
+# args[3] = category_id (nullable)
 args = sys.argv
 if len(args) < 3:
-    print('Please give me process_type and load data count')
+    print('Please give me process_type and load data count or category_id')
     sys.exit()
 
 # MySql connection
